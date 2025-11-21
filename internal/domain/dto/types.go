@@ -12,5 +12,14 @@ type TeamDTO struct {
 }
 
 type TeamResponse struct {
-	Team TeamDTO `json:"team"`
+	Team TeamDTO `json:"teams"`
+}
+
+type Error struct {
+	Code    string `json:"code"`
+	Message string `json:"message"`
+}
+
+type ErrorResponse struct {
+	Error Error `json:"error"`
 }

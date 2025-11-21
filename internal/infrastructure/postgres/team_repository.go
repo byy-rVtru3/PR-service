@@ -2,24 +2,31 @@ package postgres
 
 import (
 	"AvitoTech/internal/domain/dto"
-	"AvitoTech/internal/domain/interfaces"
 	"context"
 	"fmt"
 
 	"github.com/jackc/pgx/v5"
 )
 
+const (
+	teamExistQuery  = `SELECT EXISTS(SELECT 1 FROM teams WHERE team_name = $1)`
+	createTeamQuery = `INSERT INTO teams(team_name) VALUES ($1)`
+	insertUserQuery = `INSERT INTO users(user_id, username, team_name, is_active) VALUES ($1, $2, $3, $4)`
+	getTeamQuery    = `SELECT team_name FROM teams WHERE team_name = $1`
+	getUsersQuery   = `SELECT user_id, username, is_active FROM users WHERE team_name = $1`
+)
+
 type TeamRepo struct {
 	db *pgx.Conn
 }
 
-func NewTeamRepo(db *pgx.Conn) interfaces.TeamRepository {
-	return &TeamRepo{db: db}
+func NewTeamRepo(db *Postgres) *TeamRepo {
+	return &TeamRepo{db: db.conn}
 }
 
-func (r *TeamRepo) TeamExist(ctx context.Context, name string) (bool, error) {
+func (r *TeamRepo) TeamExists(ctx context.Context, name string) (bool, error) {
 	var exists bool
-	err := r.db.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM teams WHERE team_name = $1)`, name).Scan(&exists)
+	err := r.db.QueryRow(ctx, teamExistQuery, name).Scan(&exists)
 	if err != nil {
 		return false, fmt.Errorf("ошибка при проверке существования команды: %v", err)
 	}
@@ -27,13 +34,13 @@ func (r *TeamRepo) TeamExist(ctx context.Context, name string) (bool, error) {
 }
 
 func (r *TeamRepo) CreateTeam(ctx context.Context, team dto.TeamDTO) error {
-	_, err := r.db.Exec(ctx, `INSERT INTO teams(team_name) VALUES ($1)`, team.TeamName)
+	_, err := r.db.Exec(ctx, createTeamQuery, team.TeamName)
 	if err != nil {
 		return fmt.Errorf("ошибка при создании команды: %v", err)
 	}
 
 	for _, member := range team.Members {
-		_, err := r.db.Exec(ctx, `INSERT INTO users(user_id, username, team_name, is_active) VALUES ($1, $2, $3, $4)`,
+		_, err := r.db.Exec(ctx, insertUserQuery,
 			member.UserID, member.Username, team.TeamName, member.IsActive)
 		if err != nil {
 			return fmt.Errorf("ошибка при добавлении участника команды: %v", err)
@@ -44,16 +51,15 @@ func (r *TeamRepo) CreateTeam(ctx context.Context, team dto.TeamDTO) error {
 }
 
 func (r *TeamRepo) GetTeam(ctx context.Context, name string) (dto.TeamDTO, error) {
-	row := r.db.QueryRow(ctx, `SELECT team_name FROM teams WHERE team_name = $1`, name)
 	var teamName string
-	err := row.Scan(&teamName)
+	err := r.db.QueryRow(ctx, getTeamQuery, name).Scan(&teamName)
 	if err != nil {
-		return dto.TeamDTO{}, fmt.Errorf("команда не найдена: %v", err)
+		return dto.TeamDTO{}, fmt.Errorf("ошибка при получении команды: %v", err)
 	}
 
-	rows, err := r.db.Query(ctx, `SELECT user_id, username, is_active FROM users WHERE team_name = $1`, teamName)
+	rows, err := r.db.Query(ctx, getUsersQuery, teamName)
 	if err != nil {
-		return dto.TeamDTO{}, fmt.Errorf("ошибка при загрузке участников команды: %v", err)
+		return dto.TeamDTO{}, fmt.Errorf("ошибка при получении участников команды: %v", err)
 	}
 	defer rows.Close()
 

@@ -389,7 +389,7 @@ paths:
                 noCandidate:
                   summary: Нет доступных кандидатов
                   value:
-                    error: { code: NO_CANDIDATE, message: no active replacement candidate in team }
+                    error: { code: NO_CANDIDATE, message: no active replacement candidate in teams }
 
   /users/getReview:
     get:

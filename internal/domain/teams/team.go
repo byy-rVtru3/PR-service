@@ -1,6 +1,9 @@
-package team
+package teams
 
-import "AvitoTech/internal/domain/dto"
+import (
+	"AvitoTech/internal/domain/dto"
+	"errors"
+)
 
 type Team struct {
 	Name    string
@@ -13,3 +16,7 @@ func NewTeam(dto dto.TeamDTO) Team {
 		Members: dto.Members,
 	}
 }
+
+const TeamExistsCode = "TEAM_EXISTS"
+
+var ErrTeamExists = errors.New("teams already exists")
