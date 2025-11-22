@@ -1,0 +1,50 @@
+version: '3'
+
+services:
+  db:
+    image: postgres:latest
+    restart: always
+    shm_size: 128m
+    container_name: db_container
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "127.0.0.1:5432:5432"
+    networks:
+      - app-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  go-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: go_server_container
+    environment:
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+    depends_on:
+      - db
+    ports:
+      - "127.0.0.1:8080:8080"
+    networks:
+      - app-net
+    restart: unless-stopped
+
+volumes:
+  db_data:
+
+networks:
+  app-net:
+    driver: bridge
