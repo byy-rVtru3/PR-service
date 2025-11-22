@@ -12,4 +12,3 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 CREATE INDEX IF NOT EXISTS idx_users_team_name ON users(team_name);
-CREATE INDEX IF NOT EXISTS idx_users_user_id ON users(user_id);
