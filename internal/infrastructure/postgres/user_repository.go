@@ -26,6 +26,7 @@ const (
 			team_name = EXCLUDED.team_name,
 			is_active = EXCLUDED.is_active
 	`
+	getTeamByNameQuery = `SELECT user_id, username, is_active FROM users WHERE team_name = $1`
 )
 
 type UserRepo struct {
@@ -80,4 +81,26 @@ func (r *UserRepo) CreateOrUpdateUser(ctx context.Context, member dto.TeamMember
 		return fmt.Errorf("ошибка при создании/обновлении пользователя: %v", err)
 	}
 	return nil
+}
+
+func (r *UserRepo) GetTeamByName(ctx context.Context, teamName string) (*dto.TeamDTO, error) {
+	rows, err := r.db.Query(ctx, getTeamByNameQuery, teamName)
+	if err != nil {
+		return nil, fmt.Errorf("ошибка при получении команды: %v", err)
+	}
+	defer rows.Close()
+
+	var members []dto.TeamMemberDTO
+	for rows.Next() {
+		var member dto.TeamMemberDTO
+		if err := rows.Scan(&member.UserID, &member.Username, &member.IsActive); err != nil {
+			return nil, fmt.Errorf("ошибка при чтении участника команды: %v", err)
+		}
+		members = append(members, member)
+	}
+
+	return &dto.TeamDTO{
+		TeamName: teamName,
+		Members:  members,
+	}, nil
 }

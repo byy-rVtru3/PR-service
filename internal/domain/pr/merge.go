@@ -1,1 +1,67 @@
 package pr
+
+import (
+	"AvitoTech/internal/domain/dto"
+	"AvitoTech/pkg/logger"
+	"AvitoTech/pkg/validator"
+	"context"
+	"fmt"
+	"time"
+
+	"go.uber.org/zap"
+)
+
+func (s *Service) MergePR(ctx context.Context, req dto.MergePullRequestRequest) (*dto.MergedPullRequestDTO, error) {
+	if err := validator.ValidateUserID(req.PullRequestID); err != nil {
+		return nil, fmt.Errorf("invalid pull_request_id: %w", err)
+	}
+
+	logger.Log.Info("Мердж PR", zap.String("pr_id", req.PullRequestID))
+
+	pr, err := s.prRepo.GetPR(ctx, req.PullRequestID)
+	if err != nil {
+		logger.Log.Error("PR не найден", zap.String("pr_id", req.PullRequestID), zap.Error(err))
+		return nil, ErrPRNotFound
+	}
+
+	if pr.Status == dto.StatusMerged {
+		logger.Log.Info("PR уже смерджен", zap.String("pr_id", req.PullRequestID))
+
+		mergedAt := time.Now().Format(time.RFC3339)
+
+		return &dto.MergedPullRequestDTO{
+			PullRequestID:     pr.PullRequestID,
+			PullRequestName:   pr.PullRequestName,
+			AuthorID:          pr.AuthorID,
+			Status:            dto.StatusMerged,
+			AssignedReviewers: pr.AssignedReviewers,
+			MergedAt:          mergedAt,
+		}, nil
+	}
+
+	if err := s.prRepo.UpdatePRStatus(ctx, req.PullRequestID, dto.StatusMerged); err != nil {
+		logger.Log.Error("Ошибка при обновлении статуса PR", zap.Error(err))
+		return nil, fmt.Errorf("ошибка при обновлении статуса: %w", err)
+	}
+
+	if err := s.prRepo.SetMergedAt(ctx, req.PullRequestID); err != nil {
+		logger.Log.Error("Ошибка при установке времени мерджа", zap.Error(err))
+		return nil, fmt.Errorf("ошибка при установке времени мерджа: %w", err)
+	}
+
+	mergedAt := time.Now().Format(time.RFC3339)
+
+	logger.Log.Info("PR успешно смерджен",
+		zap.String("pr_id", req.PullRequestID),
+		zap.String("merged_at", mergedAt),
+	)
+
+	return &dto.MergedPullRequestDTO{
+		PullRequestID:     pr.PullRequestID,
+		PullRequestName:   pr.PullRequestName,
+		AuthorID:          pr.AuthorID,
+		Status:            dto.StatusMerged,
+		AssignedReviewers: pr.AssignedReviewers,
+		MergedAt:          mergedAt,
+	}, nil
+}

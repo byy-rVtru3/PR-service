@@ -1,6 +1,7 @@
 package main
 
 import (
+	"AvitoTech/internal/domain/pr"
 	"AvitoTech/internal/domain/teams"
 	"AvitoTech/internal/domain/user"
 	"AvitoTech/internal/http"
@@ -33,6 +34,7 @@ func main() {
 
 	teamRepo := postgres.NewTeamRepo(db)
 	userRepo := postgres.NewUserRepo(db)
+	prRepo := postgres.NewPRRepo(db)
 
 	teamService := teams.NewService(teamRepo, userRepo)
 	teamHandler := handlers.NewTeamHandler(teamService)
@@ -40,7 +42,10 @@ func main() {
 	userService := user.NewService(userRepo)
 	userHandler := handlers.NewUserHandler(userService)
 
-	router := http.NewRouter(teamHandler, userHandler)
+	prService := pr.NewService(prRepo, userRepo)
+	prHandler := handlers.NewPRHandler(prService)
+
+	router := http.NewRouter(teamHandler, userHandler, prHandler)
 
 	port := os.Getenv("PORT")
 	if port == "" {

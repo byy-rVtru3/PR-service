@@ -1,5 +1,10 @@
 package dto
 
+const (
+	StatusOpen   = "OPEN"
+	StatusMerged = "MERGED"
+)
+
 type TeamMemberDTO struct {
 	UserID   string `json:"user_id"`
 	Username string `json:"username"`
@@ -50,4 +55,49 @@ type SetUserActiveRequest struct {
 type GetUserReviewsResponse struct {
 	UserID       string                `json:"user_id"`
 	PullRequests []PullRequestShortDTO `json:"pull_requests"`
+}
+
+type PullRequestDTO struct {
+	PullRequestID     string   `json:"pull_request_id"`
+	PullRequestName   string   `json:"pull_request_name"`
+	AuthorID          string   `json:"author_id"`
+	Status            string   `json:"status"`
+	AssignedReviewers []string `json:"assigned_reviewers"`
+}
+
+type CreatePullRequestRequest struct {
+	PullRequestID   string `json:"pull_request_id"`
+	PullRequestName string `json:"pull_request_name"`
+	AuthorID        string `json:"author_id"`
+}
+
+type PullRequestResponse struct {
+	PR PullRequestDTO `json:"pr"`
+}
+
+type MergePullRequestRequest struct {
+	PullRequestID string `json:"pull_request_id"`
+}
+
+type MergePullRequestResponse struct {
+	PR MergedPullRequestDTO `json:"pr"`
+}
+
+type MergedPullRequestDTO struct {
+	PullRequestID     string   `json:"pull_request_id"`
+	PullRequestName   string   `json:"pull_request_name"`
+	AuthorID          string   `json:"author_id"`
+	Status            string   `json:"status"`
+	AssignedReviewers []string `json:"assigned_reviewers"`
+	MergedAt          string   `json:"mergedAt"`
+}
+
+type ReassignPullRequestRequest struct {
+	PullRequestID string `json:"pull_request_id"`
+	OldUserID     string `json:"old_user_id"`
+}
+
+type ReassignPullRequestResponse struct {
+	PR         PullRequestDTO `json:"pr"`
+	ReplacedBy string         `json:"replaced_by"`
 }

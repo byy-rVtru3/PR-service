@@ -8,7 +8,7 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-func NewRouter(teamHandler *handlers.TeamHandler, userHandler *handlers.UserHandler) *chi.Mux {
+func NewRouter(teamHandler *handlers.TeamHandler, userHandler *handlers.UserHandler, prHandler *handlers.PRHandler) *chi.Mux {
 	r := chi.NewRouter()
 
 	r.Route("/team", func(r chi.Router) {
@@ -19,6 +19,12 @@ func NewRouter(teamHandler *handlers.TeamHandler, userHandler *handlers.UserHand
 	r.Route("/users", func(r chi.Router) {
 		r.Post("/setIsActive", userHandler.SetUserActive)
 		r.Get("/getReview", userHandler.GetUserReviews)
+	})
+
+	r.Route("/pullRequest", func(r chi.Router) {
+		r.Post("/create", prHandler.CreatePR)
+		r.Post("/merge", prHandler.MergePR)
+		r.Post("/reassign", prHandler.ReassignPR)
 	})
 
 	return r
