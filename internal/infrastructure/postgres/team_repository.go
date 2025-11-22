@@ -11,9 +11,16 @@ import (
 const (
 	teamExistQuery  = `SELECT EXISTS(SELECT 1 FROM teams WHERE team_name = $1)`
 	createTeamQuery = `INSERT INTO teams(team_name) VALUES ($1)`
-	insertUserQuery = `INSERT INTO users(user_id, username, team_name, is_active) VALUES ($1, $2, $3, $4)`
 	getTeamQuery    = `SELECT team_name FROM teams WHERE team_name = $1`
 	getUsersQuery   = `SELECT user_id, username, is_active FROM users WHERE team_name = $1`
+	upsertUserQuery = `
+  INSERT INTO users (user_id, username, team_name, is_active)
+  VALUES ($1, $2, $3, $4)
+  ON CONFLICT (user_id) DO UPDATE
+  SET username = EXCLUDED.username,
+      team_name = EXCLUDED.team_name,
+      is_active = EXCLUDED.is_active
+ `
 )
 
 type TeamRepo struct {
@@ -40,10 +47,14 @@ func (r *TeamRepo) CreateTeam(ctx context.Context, team dto.TeamDTO) error {
 	}
 
 	for _, member := range team.Members {
-		_, err := r.db.Exec(ctx, insertUserQuery,
-			member.UserID, member.Username, team.TeamName, member.IsActive)
+		_, err := r.db.Exec(ctx, upsertUserQuery,
+			member.UserID,
+			member.Username,
+			team.TeamName,
+			member.IsActive,
+		)
 		if err != nil {
-			return fmt.Errorf("ошибка при добавлении участника команды: %v", err)
+			return fmt.Errorf("ошибка при добавлении пользователя %s: %v", member.UserID, err)
 		}
 	}
 

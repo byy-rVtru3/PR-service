@@ -2,6 +2,7 @@ package main
 
 import (
 	"AvitoTech/internal/domain/teams"
+	"AvitoTech/internal/domain/user"
 	"AvitoTech/internal/http"
 	"AvitoTech/internal/http/handlers"
 	"AvitoTech/internal/infrastructure/postgres"
@@ -17,11 +18,15 @@ func main() {
 	defer db.CloseDB()
 
 	teamRepo := postgres.NewTeamRepo(db)
+	userRepo := postgres.NewUserRepo(db.GetConn())
 
-	teamService := teams.NewService(teamRepo, nil)
+	teamService := teams.NewService(teamRepo, userRepo)
 	teamHandler := handlers.NewTeamHandler(teamService)
 
-	router := http.NewRouter(teamHandler)
+	userService := user.NewService(userRepo)
+	userHandler := handlers.NewUserHandler(userService)
+
+	router := http.NewRouter(teamHandler, userHandler)
 
 	port := os.Getenv("PORT")
 	if port == "" {

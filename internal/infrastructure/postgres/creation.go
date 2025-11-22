@@ -42,7 +42,7 @@ func NewDB() (*Postgres, error) {
 		return db, err
 	}
 
-	time.Sleep(10 * time.Second)
+	time.Sleep(5 * time.Second)
 
 	conn, err := pgx.Connect(context.Background(), path)
 	if err != nil {
@@ -55,4 +55,8 @@ func NewDB() (*Postgres, error) {
 
 func (db *Postgres) CloseDB() error {
 	return db.conn.Close(context.Background())
+}
+
+func (db *Postgres) GetConn() *pgx.Conn {
+	return db.conn
 }

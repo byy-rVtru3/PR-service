@@ -7,6 +7,6 @@ import (
 
 type TeamRepository interface {
 	CreateTeam(ctx context.Context, team dto.TeamDTO) error
-	TeamExist(ctx context.Context, name string) (bool, error)
+	TeamExists(ctx context.Context, name string) (bool, error)
 	GetTeam(ctx context.Context, name string) (dto.TeamDTO, error)
 }

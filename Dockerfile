@@ -14,6 +14,6 @@ WORKDIR /app
 
 COPY --from=builder /app/avitoTech /app/avitoTech
 
-EXPOSE 8000
+EXPOSE 8080
 
 CMD ["/app/avitoTech"]

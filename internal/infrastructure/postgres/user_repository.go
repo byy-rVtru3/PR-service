@@ -1,0 +1,82 @@
+package postgres
+
+import (
+	"AvitoTech/internal/domain/dto"
+	"context"
+	"fmt"
+
+	"github.com/jackc/pgx/v5"
+)
+
+const (
+	getUserReviewsQuery = `
+		SELECT pr.pull_request_id, pr.pull_request_name, pr.author_id, pr.status
+		FROM pull_requests pr
+		JOIN pr_reviewers prr ON pr.pull_request_id = prr.pull_request_id
+		WHERE prr.reviewer_id = $1
+		ORDER BY pr.created_at DESC
+	`
+	setUserActiveQuery      = `UPDATE users SET is_active = $2 WHERE user_id = $1`
+	getUserQuery            = `SELECT user_id, username, team_name, is_active FROM users WHERE user_id = $1`
+	createOrUpdateUserQuery = `
+		INSERT INTO users (user_id, username, team_name, is_active)
+		VALUES ($1, $2, $3, $4)
+		ON CONFLICT (user_id) DO UPDATE
+		SET username = EXCLUDED.username,
+			team_name = EXCLUDED.team_name,
+			is_active = EXCLUDED.is_active
+	`
+)
+
+type UserRepo struct {
+	db *pgx.Conn
+}
+
+func NewUserRepo(db *pgx.Conn) *UserRepo {
+	return &UserRepo{db: db}
+}
+
+func (r *UserRepo) GetUserReviews(ctx context.Context, userID string) ([]dto.PullRequestShortDTO, error) {
+	rows, err := r.db.Query(ctx, getUserReviewsQuery, userID)
+	if err != nil {
+		return nil, fmt.Errorf("ошибка при получении ревью пользователя: %v", err)
+	}
+	defer rows.Close()
+
+	var reviews []dto.PullRequestShortDTO
+	for rows.Next() {
+		var review dto.PullRequestShortDTO
+		if err := rows.Scan(&review.PullRequestID, &review.PullRequestName, &review.AuthorID, &review.Status); err != nil {
+			return nil, fmt.Errorf("ошибка при чтении ревью: %v", err)
+		}
+		reviews = append(reviews, review)
+	}
+
+	return reviews, nil
+}
+
+func (r *UserRepo) SetUserActive(ctx context.Context, userID string, isActive bool) (*dto.UserDTO, error) {
+	_, err := r.db.Exec(ctx, setUserActiveQuery, userID, isActive)
+	if err != nil {
+		return nil, fmt.Errorf("ошибка при обновлении статуса пользователя: %v", err)
+	}
+
+	return r.GetUser(ctx, userID)
+}
+
+func (r *UserRepo) GetUser(ctx context.Context, userID string) (*dto.UserDTO, error) {
+	var user dto.UserDTO
+	err := r.db.QueryRow(ctx, getUserQuery, userID).Scan(&user.UserID, &user.Username, &user.TeamName, &user.IsActive)
+	if err != nil {
+		return nil, fmt.Errorf("ошибка при получении пользователя: %v", err)
+	}
+	return &user, nil
+}
+
+func (r *UserRepo) CreateOrUpdateUser(ctx context.Context, member dto.TeamMemberDTO, teamName string) error {
+	_, err := r.db.Exec(ctx, createOrUpdateUserQuery, member.UserID, member.Username, teamName, member.IsActive)
+	if err != nil {
+		return fmt.Errorf("ошибка при создании/обновлении пользователя: %v", err)
+	}
+	return nil
+}

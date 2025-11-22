@@ -3,17 +3,26 @@ package teams
 import (
 	"AvitoTech/internal/domain/dto"
 	"AvitoTech/internal/domain/interfaces"
-	"AvitoTech/internal/infrastructure/postgres"
 	"context"
+	"errors"
 	"fmt"
 )
 
+const (
+	TeamExistsCode = "TEAM_EXISTS"
+	BadRequest     = "BAD_REQUEST"
+	InternalError  = "INTERNAL_ERROR"
+	TeamNotFound   = "NOT_FOUND"
+)
+
+var ErrTeamExists = errors.New("teams already exists")
+
 type Service struct {
-	teams *postgres.TeamRepo
+	teams interfaces.TeamRepository
 	users interfaces.UserRepository
 }
 
-func NewService(t *postgres.TeamRepo, u interfaces.UserRepository) *Service {
+func NewService(t interfaces.TeamRepository, u interfaces.UserRepository) *Service {
 	return &Service{teams: t, users: u}
 }
 

@@ -22,7 +22,7 @@ func (h *TeamHandler) CreateTeam(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		_ = json.NewEncoder(w).Encode(dto.ErrorResponse{
 			Error: dto.Error{
-				Code:    "BAD_REQUEST",
+				Code:    teams.BadRequest,
 				Message: "invalid request body",
 			},
 		})
@@ -47,7 +47,7 @@ func (h *TeamHandler) CreateTeam(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		_ = json.NewEncoder(w).Encode(dto.ErrorResponse{
 			Error: dto.Error{
-				Code:    "INTERNAL_ERROR",
+				Code:    teams.InternalError,
 				Message: "internal server error",
 			},
 		})
@@ -67,7 +67,7 @@ func (h *TeamHandler) GetTeam(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		_ = json.NewEncoder(w).Encode(dto.ErrorResponse{
 			Error: dto.Error{
-				Code:    "BAD_REQUEST",
+				Code:    teams.BadRequest,
 				Message: "team_name is required",
 			},
 		})
@@ -81,7 +81,7 @@ func (h *TeamHandler) GetTeam(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 		_ = json.NewEncoder(w).Encode(dto.ErrorResponse{
 			Error: dto.Error{
-				Code:    "NOT_FOUND",
+				Code:    teams.TeamNotFound,
 				Message: "resource not found",
 			},
 		})
