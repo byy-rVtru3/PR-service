@@ -32,8 +32,8 @@ type UserRepo struct {
 	db *pgx.Conn
 }
 
-func NewUserRepo(db *pgx.Conn) *UserRepo {
-	return &UserRepo{db: db}
+func NewUserRepo(db *Postgres) *UserRepo {
+	return &UserRepo{db: db.conn}
 }
 
 func (r *UserRepo) GetUserReviews(ctx context.Context, userID string) ([]dto.PullRequestShortDTO, error) {
@@ -44,6 +44,7 @@ func (r *UserRepo) GetUserReviews(ctx context.Context, userID string) ([]dto.Pul
 	defer rows.Close()
 
 	var reviews []dto.PullRequestShortDTO
+	reviews = []dto.PullRequestShortDTO{}
 	for rows.Next() {
 		var review dto.PullRequestShortDTO
 		if err := rows.Scan(&review.PullRequestID, &review.PullRequestName, &review.AuthorID, &review.Status); err != nil {

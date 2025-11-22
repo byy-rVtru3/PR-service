@@ -11,5 +11,5 @@ CREATE TABLE IF NOT EXISTS users (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX IF NOT EXISTS idx_team_members_team_name ON team_members(team_name);
-CREATE INDEX IF NOT EXISTS idx_team_members_user_id ON team_members(user_id);
+CREATE INDEX IF NOT EXISTS idx_users_team_name ON users(team_name);
+CREATE INDEX IF NOT EXISTS idx_users_user_id ON users(user_id);

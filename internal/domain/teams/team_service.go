@@ -40,13 +40,6 @@ func (s *Service) CreateTeam(ctx context.Context, req dto.TeamDTO) error {
 		return fmt.Errorf("ошибка при создании команды: %v", err)
 	}
 
-	for _, member := range req.Members {
-		err = s.users.CreateOrUpdateUser(ctx, member, req.TeamName)
-		if err != nil {
-			return fmt.Errorf("ошибка при добавлении пользователя: %v", err)
-		}
-	}
-
 	return nil
 }
 
