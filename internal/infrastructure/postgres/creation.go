@@ -1,12 +1,14 @@
 package postgres
 
 import (
+	"AvitoTech/pkg/logger"
 	"context"
 	"fmt"
 	"os"
 	"time"
 
 	"github.com/jackc/pgx/v5"
+	"go.uber.org/zap"
 )
 
 type Postgres struct {
@@ -42,13 +44,22 @@ func NewDB() (*Postgres, error) {
 		return db, err
 	}
 
+	logger.Log.Info("Подключение к PostgreSQL...",
+		zap.String("host", os.Getenv("DB_HOST")),
+		zap.String("port", os.Getenv("DB_PORT")),
+		zap.String("database", os.Getenv("DB_NAME")),
+	)
+
 	time.Sleep(5 * time.Second)
 
 	conn, err := pgx.Connect(context.Background(), path)
 	if err != nil {
+		logger.Log.Error("Ошибка подключения к БД", zap.Error(err))
 		return db, fmt.Errorf("ошибка подключения к базе данных: %w", err)
 	}
 	db.conn = conn
+
+	logger.Log.Info("Успешное подключение к PostgreSQL")
 
 	return db, nil
 }

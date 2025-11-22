@@ -3,8 +3,10 @@ package user
 import (
 	"AvitoTech/internal/domain/dto"
 	"AvitoTech/internal/domain/interfaces"
+	"AvitoTech/pkg/validator"
 	"context"
 	"errors"
+	"fmt"
 )
 
 const (
@@ -14,7 +16,6 @@ const (
 )
 
 var (
-	ErrUserIDEmpty  = errors.New("user_id не может быть пустым")
 	ErrUserNotFound = errors.New("пользователь не найден")
 )
 
@@ -36,8 +37,8 @@ func (s *Service) GetUserReviews(ctx context.Context, userID string) ([]dto.Pull
 }
 
 func (s *Service) SetUserActive(ctx context.Context, userID string, isActive bool) (*dto.UserDTO, error) {
-	if userID == "" {
-		return nil, ErrUserIDEmpty
+	if err := validator.ValidateUserID(userID); err != nil {
+		return nil, fmt.Errorf("invalid user_id: %w", err)
 	}
 
 	user, err := s.repo.SetUserActive(ctx, userID, isActive)
