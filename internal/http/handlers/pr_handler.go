@@ -19,7 +19,6 @@ func NewPRHandler(service *pr.Service) *PRHandler {
 	return &PRHandler{service: service}
 }
 
-// CreatePR создает новый Pull Request с автоназначением ревьюверов
 func (h *PRHandler) CreatePR(w http.ResponseWriter, r *http.Request) {
 	var req dto.CreatePullRequestRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -44,7 +43,6 @@ func (h *PRHandler) CreatePR(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.Header().Set("Content-Type", "application/json")
 
-		// PR уже существует
 		if errors.Is(err, pr.ErrPRExists) {
 			logger.Log.Warn("PR уже существует", zap.String("pr_id", req.PullRequestID))
 			w.WriteHeader(http.StatusConflict)
@@ -57,7 +55,6 @@ func (h *PRHandler) CreatePR(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// Автор не найден
 		if errors.Is(err, pr.ErrAuthorNotFound) {
 			logger.Log.Warn("Автор не найден", zap.String("author_id", req.AuthorID))
 			w.WriteHeader(http.StatusNotFound)
@@ -70,7 +67,6 @@ func (h *PRHandler) CreatePR(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// Внутренняя ошибка
 		logger.Log.Error("Ошибка при создании PR", zap.Error(err))
 		w.WriteHeader(http.StatusInternalServerError)
 		_ = json.NewEncoder(w).Encode(dto.ErrorResponse{
@@ -92,7 +88,6 @@ func (h *PRHandler) CreatePR(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewEncoder(w).Encode(dto.PullRequestResponse{PR: *pullRequest})
 }
 
-// MergePR помечает PR как MERGED (идемпотентная операция)
 func (h *PRHandler) MergePR(w http.ResponseWriter, r *http.Request) {
 	var req dto.MergePullRequestRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -114,7 +109,6 @@ func (h *PRHandler) MergePR(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.Header().Set("Content-Type", "application/json")
 
-		// PR не найден
 		if errors.Is(err, pr.ErrPRNotFound) {
 			logger.Log.Warn("PR не найден", zap.String("pr_id", req.PullRequestID))
 			w.WriteHeader(http.StatusNotFound)
@@ -127,7 +121,6 @@ func (h *PRHandler) MergePR(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// Внутренняя ошибка
 		logger.Log.Error("Ошибка при мердже PR", zap.Error(err))
 		w.WriteHeader(http.StatusInternalServerError)
 		_ = json.NewEncoder(w).Encode(dto.ErrorResponse{
@@ -149,7 +142,6 @@ func (h *PRHandler) MergePR(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewEncoder(w).Encode(dto.MergePullRequestResponse{PR: *mergedPR})
 }
 
-// ReassignPR переназначает ревьювера на PR
 func (h *PRHandler) ReassignPR(w http.ResponseWriter, r *http.Request) {
 	var req dto.ReassignPullRequestRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -174,7 +166,6 @@ func (h *PRHandler) ReassignPR(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.Header().Set("Content-Type", "application/json")
 
-		// PR не найден
 		if errors.Is(err, pr.ErrPRNotFound) {
 			logger.Log.Warn("PR не найден", zap.String("pr_id", req.PullRequestID))
 			w.WriteHeader(http.StatusNotFound)
@@ -187,7 +178,6 @@ func (h *PRHandler) ReassignPR(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// PR уже смерджен
 		if errors.Is(err, pr.ErrPRMerged) {
 			logger.Log.Warn("Попытка переназначить на смердженный PR",
 				zap.String("pr_id", req.PullRequestID),
@@ -202,7 +192,6 @@ func (h *PRHandler) ReassignPR(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// Ревьювер не назначен
 		if errors.Is(err, pr.ErrNotAssigned) {
 			logger.Log.Warn("Ревьювер не назначен на PR",
 				zap.String("pr_id", req.PullRequestID),
@@ -218,7 +207,6 @@ func (h *PRHandler) ReassignPR(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// Нет кандидатов для замены
 		if errors.Is(err, pr.ErrNoCandidate) {
 			logger.Log.Warn("Нет кандидатов для замены", zap.String("pr_id", req.PullRequestID))
 			w.WriteHeader(http.StatusConflict)
@@ -231,7 +219,6 @@ func (h *PRHandler) ReassignPR(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// Внутренняя ошибка
 		logger.Log.Error("Ошибка при переназначении ревьювера", zap.Error(err))
 		w.WriteHeader(http.StatusInternalServerError)
 		_ = json.NewEncoder(w).Encode(dto.ErrorResponse{
