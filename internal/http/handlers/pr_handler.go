@@ -42,7 +42,6 @@ func (h *PRHandler) CreatePR(w http.ResponseWriter, r *http.Request) {
 	pullRequest, err := h.service.CreatePR(r.Context(), req)
 	if err != nil {
 		w.Header().Set("Content-Type", "application/json")
-
 		if errors.Is(err, pr.ErrPRExists) {
 			logger.Log.Warn("PR уже существует", zap.String("pr_id", req.PullRequestID))
 			w.WriteHeader(http.StatusConflict)
