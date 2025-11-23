@@ -1,4 +1,4 @@
-.PHONY: help build up down restart logs clean
+.PHONY: help build up down restart logs clean lint
 
 help: ## Показать помощь
 	@echo "Доступные команды:"
@@ -8,6 +8,7 @@ help: ## Показать помощь
 	@echo "  make restart  - Перезапустить сервис"
 	@echo "  make logs     - Показать логи"
 	@echo "  make clean    - Остановить и удалить volumes"
+	@echo "  make lint     - Запустить линтер (golangci-lint)"
 
 build: ## Собрать Docker образы
 	docker-compose build
@@ -27,3 +28,14 @@ logs: ## Показать логи
 
 clean: ## Остановить и удалить volumes
 	docker-compose down -v
+
+lint: ## Запустить линтер
+	@echo "Running go vet..."
+	go vet ./...
+	@echo "Running gofmt..."
+	gofmt -w .
+	@echo "Running staticcheck..."
+	@which staticcheck > /dev/null || go install honnef.co/go/tools/cmd/staticcheck@latest
+	$(shell go env GOPATH)/bin/staticcheck ./...
+	@echo "✓ All checks passed!"
+
